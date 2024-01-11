@@ -14,34 +14,48 @@ let format_code (doc : Code.t) (w : int) =
   let rec pretty_node (node : Code.node Range.located) =
     match node.value with
     | Text s -> P.text s
-    | Ident (l, _) -> P.text @@ String.concat "" @@ List.map braces l
+    | Ident (_, _) -> text "\\todo{todo}"
     | Group _ -> P.text "todo"
-    | Xml_tag _ -> P.text "todo"
-    | Transclude _ -> P.text "todo"
+    (* | Xml_tag (r, s, t) -> P.text "\\xml{}" *)
+    | Xml_tag _ -> P.text "\\xml{}"
+    | Transclude addr -> textcmd "transclude" addr
     | Embed_tex _ -> P.text "todo"
     | Let _ -> P.text "todo"
-    | Prim _ -> P.text "todo"
+    | Prim (t, n) -> (
+        match t with
+        | `P -> text "\\p{" ^^ pretty n ^^ text "}"
+        | `Ol -> text "\\ol{" ^^ pretty n ^^ text "}"
+        | `Ul -> text "\\ul{" ^^ pretty n ^^ text "}"
+        | `Li -> text "\\li{" ^^ pretty n ^^ text "}"
+        | `Em -> text "\\em{" ^^ pretty n ^^ text "}"
+        | `Strong -> text "\\strong{" ^^ pretty n ^^ text "}"
+        | `Code -> text "\\code{" ^^ pretty n ^^ text "}"
+        | `Blockquote -> text "\\blockquote{" ^^ pretty n ^^ text "}"
+        | `Pre -> text "\\pre{" ^^ pretty n ^^ text "}")
     | Object _ -> P.text "todo"
     | Patch _ -> P.text "todo"
     | Call _ -> P.text "todo"
     | Query _ -> P.text "todo"
     | Def _ -> P.text "todo"
     | Alloc _ -> P.text "todo"
-    | Title _ -> P.text "todo"
+    | Title a -> text "\\author{" ^^ pretty a ^^ text "}"
     | Meta _ -> P.text "todo"
     | Author a -> textcmd "author" a
     | Tag t -> textcmd "tag" t
     | TeX_package _ -> P.text "todo"
-    | Date _ -> P.text "todo"
+    | Date d -> textcmd "date" d
     | Namespace _ -> P.text "todo"
-    | Math _ -> P.text "todo"
+    | Math (mode, _) -> (
+        match mode with
+        | Inline -> P.text "#{todo}"
+        | Display -> P.text "##{todo}")
     | Open _ -> P.text "todo"
     | Scope _ -> P.text "todo"
     | Put _ -> P.text "todo"
     | Default _ -> P.text "todo"
     | Get _ -> P.text "todo"
     | If_tex _ -> P.text "todo"
-    | Import _ -> P.text "todo"
+    | Import (_, addr) -> textcmd "import" addr
     | Taxon t -> textcmd "taxon" t
     | Block _ -> P.text "todo"
   and pretty d =
