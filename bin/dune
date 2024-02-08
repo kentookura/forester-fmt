@@ -1,4 +1,4 @@
 (executable
  (public_name forester-fmt)
  (name main)
- (libraries forester_format forester.frontend pretty_expressive))
+ (libraries forester_format pretty_expressive))

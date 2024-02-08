@@ -1,3 +1,4 @@
 (library
  (name forester_format)
- (libraries pandoc forester.core))
+ (modules forester_format pandoc_filter)
+ (libraries pandoc forester.frontend forester.core pretty_expressive))

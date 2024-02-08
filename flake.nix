@@ -36,6 +36,7 @@
           inputsFrom = [ main ];
           buildInputs = with pkgs;
             devPackages ++ [
+              pandoc
               libev
               pkg-config
               openssl
