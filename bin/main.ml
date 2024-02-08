@@ -102,18 +102,15 @@ let load_file filepath =
   Reporter.tracef "when parsing file `%s`" filepath @@ fun () ->
   let lexbuf = Lexing.from_channel (open_in filepath) in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filepath };
-  let code =
-    try Grammar.main Lexer.token lexbuf with
-    | Grammar.Error ->
-        let loc = Asai.Range.of_lexbuf lexbuf in
-        Reporter.fatalf ~loc Parse_error "failed to parse `%s`"
-          (Lexing.lexeme lexbuf)
-    | Lexer.SyntaxError token ->
-        let loc = Asai.Range.of_lexbuf lexbuf in
-        Reporter.fatalf ~loc Parse_error "unrecognized token `%s`"
-        @@ String.escaped token
-  in
-  Format.printf "\n%s" (format_code code 80)
+  try Grammar.main Lexer.token lexbuf with
+  | Grammar.Error ->
+      let loc = Asai.Range.of_lexbuf lexbuf in
+      Reporter.fatalf ~loc Parse_error "failed to parse `%s`"
+        (Lexing.lexeme lexbuf)
+  | Lexer.SyntaxError token ->
+      let loc = Asai.Range.of_lexbuf lexbuf in
+      Reporter.fatalf ~loc Parse_error "unrecognized token `%s`"
+      @@ String.escaped token
 
 let () =
   let display d = Terminal.display d in
@@ -122,4 +119,6 @@ let () =
       Reporter.run ~emit:display ~fatal:(fun d ->
           display d;
           exit 1)
-      @@ fun () -> load_file filepath
+      @@ fun () ->
+      let code = load_file filepath in
+      Format.printf "\n%s" (format_code code 80)
