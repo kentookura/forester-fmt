@@ -19,7 +19,7 @@
  (name forester_format)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune forester pretty_expressive)
+ (depends ocaml dune forester pretty_expressive pandoc)
  (tags
   (topics "to describe" your project)))
 

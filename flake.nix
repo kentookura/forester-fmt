@@ -35,12 +35,7 @@
         devShells.default = pkgs.mkShell {
           inputsFrom = [ main ];
           buildInputs = with pkgs;
-            devPackages ++ [
-              pandoc
-              libev
-              pkg-config
-              openssl
-            ];
+            devPackages ++ [ pandoc libev pkg-config openssl ];
         };
       });
 }
