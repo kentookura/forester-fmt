@@ -24,37 +24,40 @@ let _delim d =
 
 let rec format_node (node : Syn.node Range.located) =
   let open P in
+  let open Syn in
   match node.value with
-  | Syn.Text s -> text s
-  | Syn.Group (_, _) -> text "group"
-  | Syn.Math (_, _) -> text "math"
-  | Syn.Link _ -> text "link"
-  | Syn.Transclude addr -> cmd "transclude" (text addr)
-  | Syn.Query _ -> text "query"
-  | Syn.Embed_tex _ -> text "embed"
-  | Syn.Block (_, _) -> text "block"
-  | Syn.Lam (_, _) -> text "lam"
-  | Syn.Var _ -> text "var"
-  | Syn.Put (_, _, _) -> text "put"
-  | Syn.Default (_, _, _) -> text "default"
-  | Syn.Get _ -> text "get"
-  | Syn.If_tex (_, _) -> text "iftex"
-  | Syn.Xml_tag (_, _, _) -> text "xml"
-  | Syn.Unresolved _ -> text "unresolved"
-  | Syn.Prim (prim, nodes) -> (
-      match prim with
-      | `Em -> cmd "em" (hcat @@ List.map format_node nodes)
-      | `Strong -> cmd "strong" (hcat @@ List.map format_node nodes)
-      | `Ul -> cmd "ul" (hcat @@ List.map format_node nodes)
-      | `Li -> cmd "li" (hcat @@ List.map format_node nodes)
-      | `Blockquote -> cmd "blockquote" (hcat @@ List.map format_node nodes)
-      | `Code -> cmd "code" (hcat @@ List.map format_node nodes)
-      | `Ol -> cmd "ol" (hcat @@ List.map format_node nodes)
-      | `Pre -> cmd "pre" (hcat @@ List.map format_node nodes)
-      | `P -> cmd "p" (hcat @@ List.map format_node nodes))
-  | Syn.Object _ -> text "obj"
-  | Syn.Patch _ -> text "patch"
-  | Syn.Call (_, _) -> text "call"
+  | Text s -> text s
+  | Group (_, _) -> text "group"
+  | Math (_, _) -> text "math"
+  | Link _ -> text "link"
+  | Transclude addr -> cmd "transclude" (text addr)
+  | Query _ -> text "query"
+  | Embed_tex _ -> text "embed"
+  | Block (_, _) -> text "block"
+  | Lam (_, _) -> text "lam"
+  | Var _ -> text "var"
+  | Put (_, _, _) -> text "put"
+  | Default (_, _, _) -> text "default"
+  | Get _ -> text "get"
+  | If_tex (_, _) -> text "iftex"
+  | Xml_tag (_, _, _) -> text "xml"
+  | Unresolved _ -> text "unresolved"
+  | Prim (p, n) -> format_prim (p, n)
+  | Object _ -> text "obj"
+  | Patch _ -> text "patch"
+  | Call (_, _) -> text "call"
+
+and format_prim (prim, nodes) =
+  match prim with
+  | `Em -> cmd "em" (hcat @@ List.map format_node nodes)
+  | `Strong -> cmd "strong" (hcat @@ List.map format_node nodes)
+  | `Ul -> cmd "ul" (hcat @@ List.map format_node nodes)
+  | `Li -> cmd "li" (hcat @@ List.map format_node nodes)
+  | `Blockquote -> cmd "blockquote" (hcat @@ List.map format_node nodes)
+  | `Code -> cmd "code" (hcat @@ List.map format_node nodes)
+  | `Ol -> cmd "ol" (hcat @@ List.map format_node nodes)
+  | `Pre -> cmd "pre" (hcat @@ List.map format_node nodes)
+  | `P -> cmd "p" (hcat @@ List.map format_node nodes)
 
 let format_code ((_frontmatter, mainmatter) : Syn.tree) =
   let query q =
