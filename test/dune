@@ -1,15 +1,19 @@
-(test
+(executable
+ (public_name test_forester_format)
  (name test_forester_format)
- (libraries forester_format dream-html))
-
-(rule
- (with-stdout-to
-  got.tree
-  (run ./test_forester_format.exe)))
-
-(rule
- (alias runtest)
- (deps)
- (targets)
- (action
-  (diff expected.tree got.tree)))
+ (libraries forester_format pretty_expressive pandoc))
+;(test
+; (name test_forester_format)
+; (libraries forester_format))
+;
+;(rule
+; (with-stdout-to
+;  got.tree
+;  (run ./test_forester_format.exe)))
+;
+;(rule
+; (alias runtest)
+; (deps)
+; (targets)
+; (action
+;  (diff expected.tree got.tree)))

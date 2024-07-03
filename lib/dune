@@ -2,3 +2,8 @@
  (name forester_format)
  (modules forester_format pandoc_filter)
  (libraries pandoc forester.frontend forester.core pretty_expressive))
+
+(env
+ (dev
+  (flags
+   (:standard -w -66-32-33-27-26))))

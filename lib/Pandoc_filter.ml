@@ -1,4 +1,6 @@
+(*
 open Pandoc
+module Core = Forester_core
 open Core
 
 let rec syn_of_inline : Pandoc.inline -> Syn.node Range.located = function
@@ -94,3 +96,4 @@ let code_of_pandoc : Pandoc.t -> Syn.tree = function
           source_path = None;
         },
         body )
+*)
