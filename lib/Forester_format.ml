@@ -56,8 +56,10 @@ let rec f (n : Code.node) =
       d @@ format_code nodes
   | Code.Math (m, nodes) -> wrap (mode m) @@ format_code nodes
   | Code.Ident (path, methods) ->
-      text "\\" ^^ format_trie_path path
-      ^^ fold_doc (fun x y -> x ^^ text "#" ^^ y) (List.map text methods)
+      let methods =
+        List.map (fun str -> text "#" ^^ text str) methods |> fold_doc ( ^^ )
+      in
+      text "\\" ^^ format_trie_path path ^^ methods
   | Code.Xml_tag (title, attrs, nodes) ->
       let title =
         match fst title with
@@ -67,11 +69,9 @@ let rec f (n : Code.node) =
       text "\\<" ^^ title ^^ text ">"
       ^^ fold_doc ( <+> ) (List.map format_attr attrs)
       ^^ braces @@ format_code nodes
-  | Code.Subtree (maybestring, nodes) ->
+  | Code.Subtree (addr, nodes) ->
       let addr =
-        match maybestring with
-        | None -> empty
-        | Some addr -> squares @@ text addr
+        match addr with None -> empty | Some addr -> squares @@ text addr
       in
       text "\\subtree" ^^ addr ^^ braces @@ format_code nodes
   | Code.Let (path, bindings, nodes) ->
@@ -109,7 +109,7 @@ let rec f (n : Code.node) =
       text "\\call" ^^ format_code obj ^^ text method_name
   | Code.Import (vis, str) ->
       let ident =
-        match vis with Private -> text "\\import" | Public -> text "\\public"
+        match vis with Private -> text "\\import" | Public -> text "\\export"
       in
       ident ^^ braces @@ text str
   | Code.Def (path, bindinglist, nodes) ->
