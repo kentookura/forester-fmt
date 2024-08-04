@@ -1,9 +1,6 @@
 module Pandoc_filter = Pandoc_filter
-open Forester_frontend
-open Lexing
 open Pretty_expressive
-module Core = Forester_core
-open Core
+open Forester_core
 
 let w = 80
 let cf = Printer.default_cost_factory ~page_width:w ()
@@ -36,60 +33,109 @@ let parens = wrap (delim Parens)
 let squares = wrap (delim Squares)
 let twice f x = f (f x)
 
-let rec f (n : Syn.node) =
-  let open Syn in
+exception Todo
+
+let format_symbol sym = text @@ Format.asprintf "%a" Symbol.pp sym
+
+let pp_trie_path ppf segments =
+  let pp_sep ppf () = Format.fprintf ppf "/" in
+  Format.fprintf ppf "%a"
+    Format.(pp_print_list ~pp_sep pp_print_string)
+    segments
+
+let format_trie_path p = text @@ Format.asprintf "%a" pp_trie_path p
+
+let rec f (n : Code.node) =
   match n with
-  | Text s -> text s
-  | Verbatim s -> text "<<<|" ^^ nl ^^ text s ^^ nl ^^ text "<<<"
-  | Group (d, t) -> wrap (delim d) (format_code t)
-  | Math (m, t) -> wrap (mode m) (format_code t)
-  | Link { dest; title } -> (
-      match title with
-      | Some t ->
-          wrap (delim Squares) (format_code t)
-          ^^ wrap (delim Parens) (format_code dest)
-      | None -> twice (wrap (delim Squares)) (format_code dest))
-  | Transclude -> text "\\transclude"
-  | Subtree (s, t) -> nest 2 (nl ^^ format_code t)
-  | Query q -> text "s"
-  | Embed_tex -> text "\\tex"
-  | Lam (syms, t) -> text "s"
-  | Var sym -> text "s"
-  | Put (sym, t_1, t_2) -> text "\\put"
-  | Default (sym, t_1, t_2) -> text "s"
-  | Get sym -> text "s"
-  | Xml_tag (_, _, _) -> text "s"
-  | TeX_cs cs -> (
-      match cs with Word s -> text s | Symbol c -> text (String.make 1 c))
-  | Prim p -> (
-      match p with
-      | `Figure -> text "\\p"
-      | `Em -> text "\\em"
-      | `Figcaption -> text "\\figcaption"
-      | `Strong -> text "\\strong"
-      | `Ul -> text "\\ul"
-      | `Li -> text "\\li"
-      | `Blockquote -> text "\\blockquote"
-      | `Code -> text "\\code"
-      | `Ol -> text "\\ol"
-      | `Pre -> text "\\pre"
-      | `P -> text "\\p")
-  | Object _ -> text "s"
-  | Patch _ -> text "s"
-  | Call (t, s) -> format_code t ^^ text s
-  | Ref -> text "\\ref"
-  | Title -> text "\\title"
-  | Parent -> text "\\parent"
-  | Taxon -> text "\\taxon"
-  | Meta -> text "\\meta"
-  | Author -> text "\\author"
-  | Contributor -> text "\\contributor"
-  | Tag -> text "\\tag"
-  | Date -> text "\\date"
-  | Number -> text "\\number"
+  | Code.Text s -> text s
+  | Code.Verbatim s -> text s
+  | Code.Group (d, nodes) ->
+      let d =
+        match d with Braces -> braces | Squares -> squares | Parens -> parens
+      in
+      d @@ format_code nodes
+  | Code.Math (m, nodes) -> wrap (mode m) @@ format_code nodes
+  | Code.Ident (path, methods) ->
+      text "\\" ^^ format_trie_path path
+      ^^ fold_doc (fun x y -> x ^^ text "#" ^^ y) (List.map text methods)
+  | Code.Xml_tag (title, attrs, nodes) ->
+      let title =
+        match fst title with
+        | None -> text @@ snd title
+        | Some t -> text t ^^ text ":" ^^ text @@ snd title
+      in
+      text "\\<" ^^ title ^^ text ">"
+      ^^ fold_doc ( <+> ) (List.map format_attr attrs)
+      ^^ braces @@ format_code nodes
+  | Code.Subtree (maybestring, nodes) ->
+      let addr =
+        match maybestring with
+        | None -> empty
+        | Some addr -> squares @@ text addr
+      in
+      text "\\subtree" ^^ addr ^^ braces @@ format_code nodes
+  | Code.Let (path, bindings, nodes) ->
+      text "\\let" ^^ format_trie_path path
+      ^^ fold_doc ( <+> ) (List.map format_binding bindings)
+      ^^ braces @@ format_code nodes
+  | Code.Open path -> text "\\open\\" ^^ format_trie_path path
+  | Code.Scope nodes -> text "\\scope" ^^ braces @@ format_code nodes
+  | Code.Put (path, nodes) ->
+      text "\\put\\" ^^ format_trie_path path ^^ braces @@ format_code nodes
+  | Code.Default (path, nodes) ->
+      text "\\put?\\" ^^ format_trie_path path ^^ braces @@ format_code nodes
+  | Code.Get path -> format_trie_path path
+  | Code.Fun (bindinglist, nodes) ->
+      text "\\fun"
+      ^^ fold_doc ( <+> ) (List.map format_binding bindinglist)
+      ^^ braces @@ format_code nodes
+  | Code.Object { self; methods } ->
+      let self =
+        match self with Some path -> format_trie_path path | None -> empty
+      in
+      text "\\object" ^^ (squares @@ self)
+      ^^ fold_doc ( <+> ) (List.map format_method methods)
+  | Code.Patch patch -> (
+      match patch with
+      | { obj; self; methods } ->
+          let self =
+            match self with Some self -> format_trie_path self | None -> empty
+          in
+          text "\\patch"
+          ^^ (braces @@ format_code obj)
+          ^^ squares self ^^ braces
+          @@ fold_doc ( <+> ) (List.map format_method methods))
+  | Code.Call (obj, method_name) ->
+      text "\\call" ^^ format_code obj ^^ text method_name
+  | Code.Import (vis, str) ->
+      let ident =
+        match vis with Private -> text "\\import" | Public -> text "\\public"
+      in
+      ident ^^ braces @@ text str
+  | Code.Def (path, bindinglist, nodes) ->
+      text "\\def\\" ^^ format_trie_path path
+      ^^ fold_doc ( <+> ) (List.map format_binding bindinglist)
+      ^^ braces @@ format_code nodes
+  | Code.Decl_xmlns (prefix, xmlns) ->
+      text "\\xmlns:" ^^ text prefix ^^ braces @@ text xmlns
+  | Code.Alloc path -> text "\\alloc\\" ^^ format_trie_path path
+  | Code.Namespace (path, code) ->
+      text "\\namespace" ^^ format_trie_path path ^^ format_code code
 
-and format_code (ns : Syn.tree) =
-  List.map (fun n -> f Range.(n.value)) ns
-  |> fold_doc (fun x y -> x <+> space <+> y)
+and format_method ((name, nodes) : string * Code.t) =
+  (squares @@ text name) ^^ braces @@ format_code nodes
 
-let print_tree (t : Syn.tree) = format_code t |> pretty_print print_string
+and format_binding ((strategy, path) : Forester_core__Trie.path Base.binding) =
+  let strat = match strategy with Lazy -> text "~" | Strict -> empty in
+  squares @@ strat ^^ format_trie_path path
+
+and format_attr (((prefix, uname), v) : (string option * string) * Code.t) =
+  let prefix =
+    match prefix with None -> empty | Some str -> squares @@ text str
+  in
+  prefix ^^ (squares @@ text uname) ^^ braces @@ format_code v
+
+and format_code (ns : Code.t) =
+  List.map (fun n -> f Range.(n.value)) ns |> fold_doc (fun x y -> x <+> y)
+
+let print_tree (t : Code.t) = format_code t |> pretty_print print_string

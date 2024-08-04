@@ -1,17 +1,22 @@
 ;(executable
 ; (public_name test_forester_format)
 ; (name test_forester_format)
+<<<<<<< HEAD
 ; (libraries forester_format pretty_expressive pandoc eio_main asai))
 
 (env
  (dev
   (flags
    (:standard -w -66-32-33-27-26))))
+=======
+; (libraries forester_format pretty_expressive pandoc))
+>>>>>>> f1694a4 (Render all constructors)
 
 (test
  (name test_forester_format)
  (libraries forester_format))
 
+<<<<<<< HEAD
 (rule
  (with-stdout-to
   got.tree
@@ -23,3 +28,17 @@
  (targets)
  (action
   (diff test.tree got.tree)))
+=======
+;
+;(rule
+; (with-stdout-to
+;  got.tree
+;  (run ./test_forester_format.exe)))
+;
+;(rule
+; (alias runtest)
+; (deps)
+; (targets)
+; (action
+;  (diff expected.tree got.tree)))
+>>>>>>> f1694a4 (Render all constructors)

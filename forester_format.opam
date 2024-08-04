@@ -12,9 +12,10 @@ bug-reports: "https://github.com/username/reponame/issues"
 depends: [
   "ocaml"
   "dune" {>= "3.7"}
-  "forester"
+  "forester" {>= "4.2.0"}
   "pretty_expressive"
   "pandoc"
+  "alcotest"
   "odoc" {with-doc}
 ]
 build: [
@@ -33,5 +34,5 @@ build: [
 ]
 dev-repo: "git+https://github.com/username/reponame.git"
 pin-depends: [
-  ["forester.dev" "git+https://git.sr.ht/~jonsterling/ocaml-forester#8e2b7e362db593d63cce37d32cafb05160b56cb4"]
+  ["forester.dev" "git+https://git.sr.ht/~jonsterling/ocaml-forester"]
 ]

@@ -1,4 +1,4 @@
-(lang dune 3.12)
+(lang dune 3.7)
 
 (name forester_format)
 
@@ -19,7 +19,7 @@
  (name forester_format)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune forester pretty_expressive pandoc)
+ (depends ocaml dune (forester (>= 4.2.0)) pretty_expressive pandoc alcotest)
  (tags
   (topics "to describe" your project)))
 
